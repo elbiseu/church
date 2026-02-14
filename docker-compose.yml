@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_PATH=/data/liturgia.db
+      - ADMIN_PIN=${ADMIN_PIN:-otrasemanamiseñor}
+    volumes:
+      - app_data:/data
+
+volumes:
+  app_data:

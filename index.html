@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROL SEMANAL LITÚRGICO</title>
+
+<style>
+:root{
+  --b:#0b2a4a;--bg:#f5f8fc;--card:#fff;--mut:#5b6b7b;--line:#d7e3f1;
+}
+body{
+  font-family:system-ui,Segoe UI,Roboto,Arial;
+  margin:0;background:var(--bg);color:#0c1722;
+}
+header{
+  background:linear-gradient(180deg,#fff,#eef5ff);
+  border-bottom:1px solid var(--line);
+}
+.wrap{max-width:1200px;margin:auto;padding:14px;}
+h1{margin:0;font-size:18px;color:var(--b);}
+.sub{font-size:13px;color:var(--mut);margin-top:6px;}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 4px 18px rgba(0,0,0,.05);
+}
+
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:6px;}
+input,select{
+  width:100%;padding:10px;border:1px solid var(--line);
+  border-radius:12px;font-size:14px;
+}
+button{
+  padding:10px 14px;border-radius:12px;border:1px solid var(--line);
+  font-weight:800;cursor:pointer;
+}
+.primary{background:var(--b);color:#fff;border-color:var(--b);}
+.danger{background:#fff5f5;border-color:#f1b4b4;}
+.muted{font-size:12px;color:var(--mut);}
+
+.tableWrap{
+  margin-top:14px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:16px;
+}
+
+table{
+  width:100%;
+  min-width:1100px;   /* 👈 evita que se aplaste */
+  border-collapse:separate;
+  border-spacing:0;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  table-layout:fixed;
+}
+
+th,td{
+  padding:10px;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+  word-break:break-word;
+}
+
+th{
+  background:#eef5ff;
+  font-size:12px;
+  color:var(--mut);
+  text-align:center;
+}
+
+tr:last-child td{border-bottom:none;}
+td.meta{white-space:nowrap;text-align:center;font-weight:700;}
+td.cell{text-align:center;}
+.empty{color:#9aa8b8;}
+.name{font-weight:800;}
+
+.footer{
+  margin-top:18px;text-align:center;background:#fff;
+  border:1px solid var(--line);border-radius:16px;padding:14px;
+}
+.footer strong{color:var(--b);}
+.footer em{display:block;margin-top:6px;color:var(--b);}
+.footer p{font-size:13px;color:#445;max-width:800px;margin:8px auto 0;}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>TEMPLO SAN MIGUEL ARCÁNGEL — ROL SEMANAL LITÚRGICO</h1>
+    <div class="sub">
+      Responsables: Sr. Cura Jorge Hernández Contreras y Padre Abel Salgado Anzures <br>
+      «Como comunidad litúrgica, servimos con un solo corazón»
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<div class="card">
+  <div class="row">
+    <div style="flex:1;min-width:220px">
+      <label>Tu nombre</label>
+      <input id="nombre">
+    </div>
+    <div style="flex:1;min-width:160px">
+      <label>Día</label>
+      <select id="dia"></select>
+    </div>
+    <div style="flex:1;min-width:120px">
+      <label>Misa</label>
+      <select id="misa"></select>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <label>Servicio</label>
+      <select id="servicio"></select>
+    </div>
+    <div>
+      <button class="primary" id="btnAssign">Ofrecer mi servicio</button>
+      <button class="danger" id="btnClear">Limpiar tabla</button>
+    </div>
+  </div>
+  <div id="estado" class="muted" style="margin-top:10px;"></div>
+</div>
+
+<div class="tableWrap">
+<table>
+  <thead id="thead"></thead>
+  <tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div class="footer">
+  <strong>Gracias, servidor litúrgico.</strong>
+  <em>«Un día contigo es un ayer que pasó»</em>
+  <p>
+    Esta frase nos recuerda que el tiempo ofrecido a Jesús se transforma en eternidad. Servir hoy deja huella y permanece en el
+    corazón de Dios
+  </p>
+</div>
+
+</main>
+
+<script>
+/*** URL del “puente” (Apps Script /exec) ***/
+const API_URL = "https://script.google.com/macros/s/AKfycbz-48IDY4yAVs0FPJpZLrGN7_SGppGVPHB9_S1QrfP6kOFlFvY6Kuys_qN4PvV0pOgJ/exec";
+
+/*** NIP (solo para limpiar; también se valida del lado de Google) ***/
+const ADMIN_PIN = "otrasemanamiseñor";
+
+/*** Columnas y horarios ***/
+const SERVICIOS = ["Monitor","Lectura 1","Salmo","Lectura 2","Rifa","Colecta / Hojita"];
+const DIAS = [
+  {dia:"Lunes",misas:["7:00","Extra"]},
+  {dia:"Martes",misas:["7:00","19:00","Extra"]},
+  {dia:"Miércoles",misas:["7:00","19:00","Extra"]},
+  {dia:"Jueves",misas:["7:00","19:00","Extra"]},
+  {dia:"Viernes",misas:["7:00","18:00","Extra"]},
+  {dia:"Sábado",misas:["7:00","18:00","Extra"]},
+  {dia:"Domingo",misas:["7:00","12:00","19:00","Extra"]}
+];
+
+const $ = (id)=>document.getElementById(id);
+
+function fill(el,arr){ el.innerHTML = arr.map(v=>`<option>${v}</option>`).join(""); }
+fill($("dia"), DIAS.map(d=>d.dia));
+fill($("servicio"), SERVICIOS);
+
+$("dia").onchange = () => {
+  const d = DIAS.find(x=>x.dia === $("dia").value);
+  fill($("misa"), d.misas);
+};
+$("dia").dispatchEvent(new Event("change"));
+
+async function apiGet(){
+  const res = await fetch(API_URL, { method:"GET" });
+  return await res.json(); // [{Día:"Lunes", Hora:"07:00", "Monitor":"Jessi", ...}, ...]
+}
+
+async function apiPost(obj){
+  const res = await fetch(API_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify(obj)
+  });
+  return await res.json(); // {status:"ok"} o {status:"error", message:"..."}
+}
+
+async function draw(){
+  const rows = await apiGet();
+
+  $("thead").innerHTML =
+    `<tr><th>Día</th><th>Hora</th>${SERVICIOS.map(s=>`<th>${s}</th>`).join("")}</tr>`;
+
+  $("tbody").innerHTML = "";
+
+  DIAS.forEach(d=>{
+    d.misas.forEach((m,i)=>{
+      let row = `<tr>`;
+      if(i===0){
+        row += `<td class="meta" rowspan="${d.misas.length}">${d.dia}</td>`;
+      }
+      row += `<td class="meta">${m}</td>`;
+
+      SERVICIOS.forEach(s=>{
+        const found = rows.find(r => r["Día"]===d.dia && r["Hora"]===m);
+        const val = found ? (found[s] || "") : "";
+        row += `<td class="cell">${
+          val ? `<span class="name">${val}</span>` : `<span class="empty">— disponible —</span>`
+        }</td>`;
+      });
+
+      row += `</tr>`;
+      $("tbody").innerHTML += row;
+    });
+  });
+}
+
+/*** Ofrecer servicio (EN VIVO) ***/
+$("btnAssign").onclick = async () => {
+  const n = $("nombre").value.trim();
+  if(!n) return alert("Escribe tu nombre");
+
+  const payload = {
+    action: "assign",
+    Día: $("dia").value,
+    Hora: $("misa").value,
+    Servicio: $("servicio").value,
+    Nombre: n
+  };
+
+  const out = await apiPost(payload);
+
+  if(out.status !== "ok"){
+    alert(out.message || "No se pudo guardar. Intenta otra vez.");
+    return;
+  }
+
+  $("nombre").value="";
+  $("estado").textContent="Gracias por ofrecer tu servicio 🙏";
+  await draw();
+};
+
+/*** Limpiar tabla (EN VIVO + NIP) ***/
+$("btnClear").onclick = async () => {
+  const pin = prompt("Ingresa el NIP");
+  if(pin !== ADMIN_PIN) return alert("Clave incorrecta");
+
+  const out = await apiPost({ action:"clear", pin });
+
+  if(out.status !== "ok"){
+    alert(out.message || "No se pudo limpiar.");
+    return;
+  }
+
+  $("estado").textContent="Tabla limpia ✅";
+  await draw();
+};
+
+// Cargar y refrescar para ver cambios de otros (cada 8 segundos)
+draw();
+setInterval(draw, 8000);
+
+</script>
+
+</body>
+</html>
+
